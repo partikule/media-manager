@@ -235,6 +235,14 @@
 </template>
 
 <script>
+
+	import Vue from 'vue';
+	import Dropzone from 'dropzone';
+	import moment from 'moment';
+
+	Dropzone.autoDiscover = false;
+
+
     export default {
 
         props: {
@@ -271,10 +279,56 @@
              */
             show: {
                 default: false
-            }
-        },
+            },
 
-        data: function () {
+			eventHub: {
+				default: null
+			},
+
+			dateFormat: {
+				type: String,
+				default: 'DD/MM/YYYY'
+			}
+
+		},
+
+		computed:{
+			isFolderEmpty(){
+				return ((this.files.length + this.folders.length ) === 0);
+			},
+			getEventHub(){
+				if (this.eventHub !== null)
+					return this.eventHub;
+				else
+				{
+					if (window.eventHub)
+						return window.eventHub;
+					else
+					{
+						window.eventHub = new Vue();
+						return window.eventHub;
+					}
+				}
+			},
+			orderDirectionIcon(){
+				return this.sortDirection ? 'down' : 'up';
+			}
+		},
+
+		filters: {
+			moment(date, format) {
+				if (!date) return null;
+				if (!format) format = 'DD/MM/YYYY LTS';
+				return moment(date).utc().format(format)
+			},
+			humanFileSize(size)
+			{
+				let i = Math.floor(Math.log(size) / Math.log(1024));
+				return ( size / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+			}
+		},
+
+		data: function () {
 
             return {
 
@@ -332,25 +386,25 @@
                 showMoveItemModal: false,
                 showRenameItemModal: false,
 
-                /**
+				/**
 				 * property to hold direction of column sorting
-                 */
-                sortDirection: false
-            }
+				 */
+				sortDirection: false,
+
+				/**
+				 * Column on which the sort is currently active
+				 */
+				sortColumn: null
+			}
         },
 
-		computed:{
-          	isFolderEmpty(){
-          	    return ((this.files.length + this.folders.length ) === 0);
-			}
-		},
 
         created: function () {
-            window.eventHub.$on('media-manager-reload-folder', this.loadFolder);
+			this.getEventHub.$on('media-manager-reload-folder', this.loadFolder);
         },
         // It's good to clean up event listeners before a component is destroyed.
         beforeDestroy: function () {
-            window.eventHub.$off('media-manager-reload-folder', this.loadFolder);
+			this.getEventHub.$off('media-manager-reload-folder', this.loadFolder);
         },
 
         mounted: function () {
@@ -371,13 +425,22 @@
              */
             orderBy(column)
 			{
-			    this.sortDirection = !this.sortDirection;
+				if (column !== this.sortColumn)
+					this.sortDirection = false;
+				else
+					this.sortDirection = !this.sortDirection;
+
+				this.sortColumn = column;
 			    const order = (this.sortDirection)? 'desc' : 'asc';
 				this.files = _.orderBy(this.files, [column], [order]);
 				this.folders = _.orderBy(this.folders, [column], [order]);
 			},
 
-            close() {
+			orderedBy(column){
+				return (this.sortColumn === column);
+			},
+
+			close() {
                 this.breadCrumbs = {};
                 this.currentFile = null;
                 this.currentPath = null;
@@ -475,49 +538,52 @@
 
             dragUpload(){
 
-                $("div#mediaManagerDropZone").dropzone({
-                    clickable: false,
-                    createImageThumbnails: false,
-                    dictDefaultMessage: '',
-                    enqueueForUpload: true,
-                    paramName: "files",
-                    previewsContainer: null,
-                    previewTemplate: '<span class="hidden"></span>',
-                    hiddenInputContainer: true,
-                    uploadMultiple: true,
-                    url: `${this.prefix}browser/file`,
-                    headers: {
-                        "X-CSRF-TOKEN": window.axios.defaults.headers.common['X-CSRF-TOKEN']
-                    },
+				new Dropzone(
+					this.$el.querySelector('.dropzone'),
+					{
+						clickable: false,
+						createImageThumbnails: false,
+						dictDefaultMessage: '',
+						enqueueForUpload: true,
+						paramName: "files",
+						previewsContainer: null,
+						previewTemplate: '<span class="hidden"></span>',
+						hiddenInputContainer: true,
+						uploadMultiple: true,
+						url: `${this.prefix}browser/file`,
+						headers: {
+							"X-CSRF-TOKEN": window.axios.defaults.headers.common['X-CSRF-TOKEN']
+						},
 
-                    sending: (file, xhr, form) => {
-                        this.loading = true;
-                        form.append('folder', this.currentPath);
-                    },
+						sending: (file, xhr, form) => {
+							this.loading = true;
+							form.append('folder', this.currentPath);
+						},
 
-                    completemultiple: (files) => {
-                        this.loading = false;
-                        this.loadFolder(this.currentPath);
-                    },
+						completemultiple: (files) => {
+							this.loading = false;
+							this.loadFolder(this.currentPath);
+						},
 
-                    errormultiple: (files, response) => {
-                        this.mediaManagerNotify(response.error);
-                    },
+						errormultiple: (files, response) => {
+							this.mediaManagerNotify(response.error);
+						},
 
-                    successmultiple: (files, response) => {
-                        this.mediaManagerNotify(response.success);
-                    },
+						successmultiple: (files, response) => {
+							this.mediaManagerNotify(response.success);
+						},
 
-                    totaluploadprogress: (uploadProgress) => {
-                        this.uploadProgress = parseFloat(Math.round(uploadProgress * 100) / 100).toFixed(2);
-                        if (this.uploadProgress < 100) {
-                            this.loading = true;
-                        } else {
-                            this.uploadProgress = 0;
-                            this.loading = false;
-                        }
-                    }
-                });
+						totaluploadprogress: (uploadProgress) => {
+							this.uploadProgress = parseFloat(Math.round(uploadProgress * 100) / 100).toFixed(2);
+							if (this.uploadProgress < 100) {
+								this.loading = true;
+							} else {
+								this.uploadProgress = 0;
+								this.loading = false;
+							}
+						}
+					}
+				)
             }
         }
     }
