@@ -1,0 +1,90 @@
+
+$media-manager-file-description-font-size: $size-7
+
+.media-manager
+  &.modal-mode
+    margin-top: 10px
+    .media-manager-toolbar
+      position: absolute
+      z-index: 10
+      top: 7px
+      right: 58px
+    .media-manager-controls
+      position: absolute
+      background-color: $white-ter
+      z-index: 10
+      width: 100%
+      right: 0
+      top: 40px
+      padding: 0 20px
+    .breadcrumb
+      background-color: $white-ter
+      padding: 0
+    .file-browser
+      margin-top: 28px
+    .file-picker-sidebar
+      padding-top: 40px
+  .buttons
+    align-items: inherit
+  .breadcrumb
+    margin-bottom: 0.5em
+    background-color: $white
+    padding: 0 0.5em
+  .file-description
+    font-size: $media-manager-file-description-font-size
+    span
+      color: $grey
+      font-weight: bold
+    .label
+      color: $grey-light
+      display: inline-block
+      font-size: $media-manager-file-description-font-size
+      font-weight: normal
+      margin: 0 0.5em 0
+    .file-description-field
+      white-space: nowrap
+      overflow: hidden
+      text-overflow: ellipsis
+  .dropzone
+    &.dz-drag-hover
+      &:before
+        font-family: 'FontAwesome'
+        content: $fa-var-cloud-upload
+        pointer-events: none
+        background-color: rgba(0, 0, 0, .1)
+        color: $orange
+        opacity: 0.7
+        display: block
+        font-size: 7em
+        position: absolute
+        left: 0
+        right: 0
+        top: 0
+        bottom: 0
+        z-index: 1000
+        text-align: center
+        overflow: hidden
+        padding-top: 35vh
+  .media-manager-toolbar-buttons
+    margin-bottom: 0.5rem
+    label
+      padding-top: 0.375em
+      margin-right: 0.75rem
+    .delete
+      margin-top: 0.375rem
+  .file-browser
+    min-height: 180px
+    table tr
+      user-select: none
+    .file-picker-list
+      min-height: 180px
+    .file-browser-empty-folder
+      padding: 20px
+      font-size: $size-6
+      color: $grey-darker
+
+.media-manager-no-preview
+  padding: 1em 0
+  text-align: center
+  i
+    font-size: 5em

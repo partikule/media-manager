@@ -1,0 +1,109 @@
+@charset "utf-8"
+
+$fa-font-path: "/fonts" !default
+
+
+@import '~bulma'
+@import '~font-awesome/scss/font-awesome'
+
+@import 'animate'
+
+@import 'elements/_all'
+@import 'components/_all'
+@import 'settings/_all'
+@import 'login.sass'
+
+.button
+  &:active
+    outline: none
+
+input:-webkit-autofill
+    -webkit-box-shadow: 0 0 0 1000px white inset
+
+html,body
+  padding: 0
+  margin: 0
+
+body
+  height: 100%
+  overflow: hidden
+  font-size: $size-6
+
+
+[contenteditable]:focus
+  outline: 0 solid transparent
+
+
+section
+  &.app-container
+    display: flex
+    float: none
+    height: calc(100vh - 52px)
+  &.app-main
+    overflow-y: auto
+    overflow-x: hidden
+    padding: 0
+    // min-height: min-content
+    flex-grow: 1
+
+
+.app-main-content
+  padding: 0 20px 20px 20px
+
+/*
+ * Big icons
+ * @todo: Move in a dedicated file ?
+ *
+ */
+$big-icon-size: 36px
+
+/*
+ * Preloader
+ *
+ */
+.preloader
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  background-color: #111
+  z-index: 9999
+  img
+    display: block
+    position: absolute
+    left: 0
+    right: 0
+    top: 0
+    bottom: 0
+    width: 50px
+    height: 50px
+    margin: auto
+
+.big-icon-container
+  display: flex
+  justify-content: center
+  margin-bottom: 20px
+.icon
+  &.big
+    height: $big-icon-size
+    width: $big-icon-size
+    font-size: $big-icon-size
+    text-align: center
+    align-items: center
+    display: flex
+  &.rounded
+    height: ($big-icon-size * 2)
+    width: ($big-icon-size * 2)
+    border: solid 1px #ccc
+    border-radius: 50%
+  &.is-success
+    color: $success
+  &.is-warning
+    color: $warning
+  &.is-danger
+    color: $danger
+  &.is-info
+    color: $info
+
+
