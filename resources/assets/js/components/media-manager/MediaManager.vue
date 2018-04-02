@@ -448,32 +448,6 @@
             },
 
 			/**
-			 * If set, events like  delete, move, rename
-			 * will be emaitted on this eventHub, with the
-			 * corresponding event name.
-			 */
-			eventHub: {
-            	default: null
-			},
-
-			/**
-			 * EventHub events names.
-			 * Some are set by default, prefixed by 'mediamanager'
-			 * to avoid collisions.
-			 */
-			eventHubEvents: {
-				type: Object,
-				default: function () {
-					return {
-						delete: 'mediamanager.delete',
-						move: 'mediamanager.move',
-						rename: 'mediamanager.rename',
-						create_folder: 'mediamanager.create_folder',
-					}
-				}
-			},
-
-			/**
 			 * Notification Component
 			 * If set, will be used for notification
 			 * and Delete confirmation from modal
@@ -1002,7 +976,14 @@
 				// To be sure Enter / ESC does not fire.
 				this.disableKeyboardEvents();
 
-				this.emitConfirmation({
+				/**
+				 * Emits one confirmation event to be used by an external component
+				 * Both onAccept() and onClose() should be called by the external notification component
+				 * If onAccept() is not called by the external confirmation component, the delete will not be done.
+				 * If onClose() is not called, the keyboards events will not be restored, but they will through the
+				 * table's focus, so this is an acceptable fallback.
+				 */
+				this.emitEvent('confirmation', {
 					title: this.trans('mediamanager.confirmation.sure'),
 					content: this.trans('mediamanager.confirmation.delete_multiple'),
 					onAccept: this.deleteItem,
@@ -1024,13 +1005,14 @@
 						this.removeItemFromData(item);
 						this.selectNextItem(currentIdx);
 						this.currentFile = null;
+
+						// Only emit one notification on multiple moves
 						if (this.currentFiles.length === 0)
 							this.emitNotification(response.data.success);
+
 						this.hideDeleteItem();
 
-						if (this.eventHub)
-							this.eventHub.$emit(this.eventHubEvents.delete, item);
-
+						this.emitEvent('delete', item);
 					})
 					.catch(error => {
 						this.setCurrentItemLoading(false);
@@ -1069,11 +1051,12 @@
 					this.removeItemFromData(item);
 					this.hideMoveItem();
 
+					// Only emit one notification on multiple moves
 					if (this.currentFiles.length === 0)
 						this.emitNotification(response.data.success);
 
-					if (this.eventHub)
-						this.eventHub.$emit(this.eventHubEvents.move, data);
+					// Emit one 'move' event on each file move
+					this.emitEvent('move', data);
 				})
 				.catch(error => {
 					this.emitNotification(error.response.data.error, 'error');
@@ -1093,9 +1076,8 @@
 					this.emitNotification(response.data.success);
 					this.loadFolder();
 					this.hideRenameItem();
-					if (this.eventHub)
-						this.eventHub.$emit(this.eventHubEvents.rename, data);
 
+					this.emitEvent('rename', data);
 				})
 				.catch(error => {
 					this.emitNotification(error.response.data.error, 'error');
@@ -1113,8 +1095,7 @@
 					this.emitNotification(response.data.success);
 					this.loadFolder();
 					this.hideCreateFolder();
-					if (this.eventHub)
-						this.eventHub.$emit(this.eventHubEvents.create_folder, data);
+					this.emitEvent('create_folder', data);
 				})
 				.catch(error => {
 					this.emitNotification(error.response.data.error, 'error');
@@ -1152,7 +1133,7 @@
 						);
 			},
 
-			emitNotification(notices, type='success', params={}) {
+			emitNotification(notices, type='success') {
 
             	let self = this;
 
@@ -1166,19 +1147,9 @@
 				this.$emit('notification', notices, type);
 			},
 
-			/**
-			 *
-			 * @param params	Notification parameters
-			 * 			{
-			 * 				title: 'Are you sure?'
-			 * 				content: 'Delete these items?'
-			 * 				onAccept: function()			// This method must be called to execute the callback.
-			 * 				onClose: function()				// This method should be called when the notification component closes.
-			 * 			}
-			 */
-			emitConfirmation(params={})
+			emitEvent(eventName, params)
 			{
-				this.$emit('confirmation', params);
+				this.$emit(eventName, params);
 			},
 
 			enableKeyboardEvents(){
